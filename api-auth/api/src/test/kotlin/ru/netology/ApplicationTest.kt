@@ -11,9 +11,11 @@ import io.ktor.server.testing.setBody
 import io.ktor.server.testing.withTestApplication
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import kotlinx.io.core.Input
 import kotlinx.io.streams.asInput
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Files
 import java.nio.file.Paths
 import kotlin.test.assertEquals
@@ -24,7 +26,7 @@ class ApplicationTest {
     private val multipartBoundary = "***blob***"
     private val multipartContentType =
         ContentType.MultiPart.FormData.withParameter("boundary", multipartBoundary).toString()
-    private val uploadPath = Files.createTempDirectory("test").toString()
+    private val uploadPath = "./uploads"
     private val configure: Application.() -> Unit = {
         (environment.config as MapApplicationConfig).apply {
             put("ncraft.upload.dir", uploadPath)
@@ -32,43 +34,16 @@ class ApplicationTest {
         module()
     }
 
-//    @Test // аннотация
-//    fun testGetAll() {
-//        println(uploadPath)
-//        withTestApplication(configure) {
-//            handleRequest(HttpMethod.Get, "/api/v1/posts").run {
-//                assertEquals(HttpStatusCode.OK, response.status())
-//                assertEquals(jsonContentType, response.contentType())
-//            }
-//        }
-//    }
-//
-//    @Test
-//    fun testAdd() {
-//        println(uploadPath)
-//        withTestApplication(configure) {
-//            with(handleRequest(HttpMethod.Post, "/api/v1/posts") {
-//                addHeader(HttpHeaders.ContentType, jsonContentType.toString())
-//                setBody(
-//                    """
-//                        {
-//                            "id": 0,
-//                            "author": "Vasya"
-//                        }
-//                    """.trimIndent()
-//                )
-//            }) {
-//                response
-//                assertEquals(HttpStatusCode.OK, response.status())
-//                assertTrue(response.content!!.contains("\"id\": 1"))
-//            }
-//        }
-//    }
+    @BeforeEach
+    fun setUp() {
+        println("setup")
+    }
 
-    @Test
-    fun testUpload() {
+    @ParameterizedTest
+    @ValueSource(strings = [ "/api/v1/media", "/api/v1/media" ])
+    fun testUpload(url: String) {
         withTestApplication(configure) {
-            with(handleRequest(HttpMethod.Post, "/api/v1/media") {
+            with(handleRequest(HttpMethod.Post, url) {
                 addHeader(HttpHeaders.ContentType, multipartContentType)
                 setBody(
                     multipartBoundary,
