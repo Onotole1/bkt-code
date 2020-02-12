@@ -20,6 +20,10 @@ class UserService(
         return repo.getById(id)
     }
 
+    suspend fun getByUserName(username: String): UserModel? {
+        return repo.getByUsername(username)
+    }
+
     suspend fun getById(id: Long): UserResponseDto {
         val model = repo.getById(id) ?: throw NotFoundException()
         return UserResponseDto.fromModel(model)

@@ -1,5 +1,6 @@
 package ru.netology.route
 
+import io.ktor.application.ApplicationCall
 import io.ktor.application.call
 import io.ktor.auth.authenticate
 import io.ktor.auth.authentication
@@ -9,9 +10,11 @@ import io.ktor.request.receive
 import io.ktor.request.receiveMultipart
 import io.ktor.response.respond
 import io.ktor.routing.*
+import io.ktor.util.pipeline.PipelineContext
 import ru.netology.dto.AuthenticationRequestDto
 import ru.netology.dto.PostRequestDto
 import ru.netology.dto.UserResponseDto
+import ru.netology.me
 import ru.netology.model.UserModel
 import ru.netology.service.FileService
 import ru.netology.service.PostService
@@ -42,10 +45,9 @@ class RoutingV1(
                     }
                 }
 
-                authenticate {
+                authenticate("basic", "jwt") {
                     route("/me") {
                         get {
-                            val me = call.authentication.principal<UserModel>()
                             call.respond(UserResponseDto.fromModel(me!!))
                         }
                     }

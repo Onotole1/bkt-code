@@ -14,6 +14,6 @@ class JWTTokenService {
     fun generate(id: Long): String = JWT.create()
         .withClaim("id", id)
          // TODO: Comment this to disable expiration
-        .withExpiresAt(Date(System.currentTimeMillis() + 1000))
+        //.withExpiresAt(Date(System.currentTimeMillis() + 1000))
         .sign(algo)
 }

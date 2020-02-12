@@ -4,6 +4,7 @@ import io.ktor.application.Application
 import io.ktor.application.call
 import io.ktor.application.install
 import io.ktor.auth.Authentication
+import io.ktor.auth.basic
 import io.ktor.auth.jwt.jwt
 import io.ktor.features.ContentNegotiation
 import io.ktor.features.ParameterConversionException
@@ -59,7 +60,8 @@ fun Application.module() {
     }
 
     install(KodeinFeature) {
-        constant(tag ="upload-dir") with (environment.config.propertyOrNull("ncraft.upload.dir")?.getString() ?: throw ConfigurationException("Upload dir is not specified"))
+        constant(tag = "upload-dir") with (environment.config.propertyOrNull("ncraft.upload.dir")?.getString()
+            ?: throw ConfigurationException("Upload dir is not specified"))
         bind<PasswordEncoder>() with eagerSingleton { BCryptPasswordEncoder() }
         bind<JWTTokenService>() with eagerSingleton { JWTTokenService() }
         bind<PostRepository>() with eagerSingleton { PostRepositoryInMemoryWithMutexImpl() }
@@ -75,7 +77,7 @@ fun Application.module() {
     }
 
     install(Authentication) {
-        jwt {
+        jwt("jwt") {
             val jwtService by kodein().instance<JWTTokenService>()
             verifier(jwtService.verifier)
             val userService by kodein().instance<UserService>()
@@ -83,6 +85,21 @@ fun Application.module() {
             validate {
                 val id = it.payload.getClaim("id").asLong()
                 userService.getModelById(id)
+            }
+        }
+
+        basic("basic") {
+
+            val encoder by kodein().instance<PasswordEncoder>()
+            val userService by kodein().instance<UserService>()
+            validate { credentials ->
+                val user = userService.getByUserName(credentials.name)
+
+                if (encoder.matches(credentials.password, user?.password)) {
+                    user
+                } else {
+                    null
+                }
             }
         }
     }
